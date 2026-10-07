@@ -1,0 +1,519 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#F7F4EC;color:#18231F}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>今次是次該次 文献库</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Serif+SC:wght@400;600&family=Noto+Sans+SC:wght@400;500&display=swap">
+
+<style>
+/* 版式：松石绿报头 + 纸白卡片列 —— 左侧筛选栏，右侧文献卡；卡片就地展开为五维分析／编辑表单 */
+:root{
+  --paper:#F4F7FB; --surface:#FFFFFF; --surface-2:#EEF3FF;
+  --ink:#1D2433; --ink-2:#4E5D7A; --ink-3:#7C8AA5;
+  --rule:#DCE4F0; --rule-2:#C8D4EA;
+  --navy:#243B6B; --navy-2:#192C4F;
+  --navy-ink:#EEF5FF; --navy-rule:#4967A1;
+  --d1:#D97706; --d1-bg:#FFF1DF; /* 核心论点 */
+  --d2:#C74C74; --d2-bg:#FDEAF2; /* 关键概念 */
+  --d3:#2F7AC5; --d3-bg:#E7F3FF; /* 实证证据 */
+  --d4:#3D9C7F; --d4-bg:#E6F7F0; /* 让步反驳 */
+  --d5:#6C5BD8; --d5-bg:#F0EBFF; /* 方法论 */
+  --ok:#3D9C7F; --warn:#D97706; --bad:#C74C74;
+  --focus:#2F7AC5;
+  --f-serif:'Lora','Noto Serif SC',Georgia,'Songti SC',serif;
+  --f-ui:'IBM Plex Sans','Noto Sans SC',system-ui,-apple-system,'PingFang SC',sans-serif;
+  --r:4px; --maxw:1180px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#0F172A; --surface:#162237; --surface-2:#1D2D46;
+  --ink:#EEF4FF; --ink-2:#B3C3E0; --ink-3:#8AA0C7;
+  --rule:#2C3D5F; --rule-2:#425A8B;
+  --navy:#1A2C4F; --navy-2:#10203A; --navy-ink:#EEF5FF; --navy-rule:#5A7AC1;
+  --d1:#F4B35E; --d1-bg:#3A2A12;
+  --d2:#E88AAD; --d2-bg:#3D1F2B;
+  --d3:#7BB8F7; --d3-bg:#143454;
+  --d4:#7FC7AB; --d4-bg:#17372F;
+  --d5:#B8A6FF; --d5-bg:#2B2548;
+  --ok:#7FC7AB; --warn:#F4B35E; --bad:#E88AAD;
+  --focus:#8BB9FF;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#0F172A; --surface:#162237; --surface-2:#1D2D46;
+  --ink:#EEF4FF; --ink-2:#B3C3E0; --ink-3:#8AA0C7;
+  --rule:#2C3D5F; --rule-2:#425A8B;
+  --navy:#1A2C4F; --navy-2:#10203A; --navy-ink:#EEF5FF; --navy-rule:#5A7AC1;
+  --d1:#F4B35E; --d1-bg:#3A2A12;
+  --d2:#E88AAD; --d2-bg:#3D1F2B;
+  --d3:#7BB8F7; --d3-bg:#143454;
+  --d4:#7FC7AB; --d4-bg:#17372F;
+  --d5:#B8A6FF; --d5-bg:#2B2548;
+  --ok:#7FC7AB; --warn:#F4B35E; --bad:#E88AAD;
+  --focus:#8BB9FF;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;font-weight:600;text-wrap:balance}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── 报头 ── */
+.masthead{background:var(--navy);color:var(--navy-ink);border-bottom:3px solid var(--navy-2)}
+.mh-in{max-width:var(--maxw);margin:0 auto;padding-block:14px;padding-inline:20px;display:flex;flex-wrap:wrap;gap:14px;align-items:baseline}
+.mh-t{font-family:var(--f-serif);font-size:21px;font-weight:600;letter-spacing:.01em}
+.mh-s{font-size:12.5px;color:#DCEBFF;letter-spacing:.04em}
+.mh-sp{flex:1 1 auto;min-width:0}
+.legend{max-width:var(--maxw);margin:0 auto;padding-inline:20px;padding-bottom:12px;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11.5px;color:#DCEBFF;letter-spacing:.03em}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+/* ── 工具条 ── */
+.toolbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--rule)}
+.tb-in{max-width:var(--maxw);margin:0 auto;padding-block:10px;padding-inline:20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.search{flex:1 1 220px;min-width:0;display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--rule);border-radius:var(--r);padding:6px 10px}
+.search input{flex:1 1 auto;min-width:0;border:0;background:transparent;outline:none;font-size:14px}
+.counts{display:flex;gap:10px;font-size:12.5px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.counts b{font-weight:600;color:var(--ink)}
+.btn{border:1px solid var(--rule-2);background:var(--surface);color:var(--ink);border-radius:var(--r);padding:6px 12px;font-size:13.5px;font-weight:500}
+.btn:hover{border-color:var(--ink-3)}
+.btn-p{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn-p:hover{background:var(--navy-2);border-color:var(--navy-2)}
+.btn-d{color:var(--bad);border-color:var(--rule-2)}
+.btn-sm{padding:3px 9px;font-size:12.5px}
+.seg{display:inline-flex;border:1px solid var(--rule-2);border-radius:var(--r);overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:6px 12px;font-size:13px;color:var(--ink-2);border-right:1px solid var(--rule)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
+
+/* ── 主体 ── */
+.wrap{max-width:var(--maxw);margin:0 auto;padding-inline:20px;padding-block:22px 64px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.wrap{grid-template-columns:1fr;gap:16px}}
+.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 58px);display:flex;flex-direction:column;gap:18px}
+@media (max-width:860px){.rail{position:static;flex-direction:row;flex-wrap:wrap;gap:10px}}
+.rail h4{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:7px}
+.chips{display:flex;flex-direction:column;gap:3px}
+@media (max-width:860px){.chips{flex-direction:row;flex-wrap:wrap}}
+.chip{text-align:left;border:1px solid transparent;background:transparent;color:var(--ink-2);padding:4px 9px;border-radius:var(--r);font-size:13px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.chip:hover{background:var(--surface)}
+.chip[aria-pressed="true"]{background:var(--surface);border-color:var(--rule-2);color:var(--ink);font-weight:500}
+.chip em{font-style:normal;color:var(--ink-3);font-size:11.5px;font-variant-numeric:tabular-nums}
+
+.list{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);border-left:3px solid var(--rule-2)}
+.card.v-ok{border-left-color:var(--ok)} .card.v-wait{border-left-color:var(--warn)} .card.v-bad{border-left-color:var(--bad)}
+.card-h{display:flex;gap:12px;align-items:flex-start;padding:13px 15px;width:100%;background:transparent;border:0;text-align:left}
+.card-h:hover{background:var(--surface-2)}
+.yr{font-family:var(--f-ui);font-size:12.5px;color:var(--ink-3);font-variant-numeric:tabular-nums;padding-top:3px;min-width:38px}
+.card-m{flex:1 1 auto;min-width:0}
+.ttl{font-family:var(--f-serif);font-size:16px;line-height:1.4;color:var(--ink)}
+.meta{font-size:12.5px;color:var(--ink-2);margin-top:3px}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.tag{font-size:11px;letter-spacing:.02em;padding:1px 7px;border-radius:99px;border:1px solid var(--rule-2);color:var(--ink-2)}
+.tag.cat{background:var(--surface-2)}
+.vflag{font-size:11px;padding:1px 7px;border-radius:99px;white-space:nowrap;font-weight:500}
+.v-ok .vflag{background:var(--d4-bg);color:var(--d4)}
+.v-wait .vflag{background:var(--d1-bg);color:var(--d1)}
+.v-bad .vflag{background:var(--d2-bg);color:var(--d2)}
+
+.body{padding:0 15px 16px;border-top:1px solid var(--rule);margin-top:0}
+.dims{display:grid;gap:9px;margin-top:14px}
+.dim{border-left:3px solid var(--rule-2);padding:8px 11px;border-radius:0 var(--r) var(--r) 0;font-size:13.5px;line-height:1.62}
+.dim b{display:block;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:3px;font-weight:600}
+.dim.e{color:var(--ink-3);font-style:italic}
+.k1{border-left-color:var(--d1);background:var(--d1-bg)} .k1 b{color:var(--d1)}
+.k2{border-left-color:var(--d2);background:var(--d2-bg)} .k2 b{color:var(--d2)}
+.k3{border-left-color:var(--d3);background:var(--d3-bg)} .k3 b{color:var(--d3)}
+.k4{border-left-color:var(--d4);background:var(--d4-bg)} .k4 b{color:var(--d4)}
+.k5{border-left-color:var(--d5);background:var(--d5-bg)} .k5 b{color:var(--d5)}
+.dim.k1,.dim.k2,.dim.k3,.dim.k4,.dim.k5{color:var(--ink)}
+.quote{font-family:var(--f-serif);font-style:italic;font-size:14px;color:var(--ink-2);border-left:2px solid var(--rule-2);padding-left:12px;margin-top:13px}
+.rowline{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;align-items:center}
+.src{font-size:12.5px;color:var(--ink-2);margin-top:12px;word-break:break-word}
+.src a{color:var(--focus)}
+
+/* ── 表单 ── */
+.form{display:grid;gap:11px;margin-top:14px}
+.frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px}
+.f label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
+.f input,.f select,.f textarea{width:100%;background:var(--surface-2);border:1px solid var(--rule);border-radius:var(--r);padding:7px 9px;font-size:14px;outline:none}
+.f textarea{resize:vertical;min-height:62px;line-height:1.55}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--focus);background:var(--surface)}
+.f.d1 textarea{border-left:3px solid var(--d1)} .f.d2 textarea{border-left:3px solid var(--d2)}
+.f.d3 textarea{border-left:3px solid var(--d3)} .f.d4 textarea{border-left:3px solid var(--d4)}
+.f.d5 textarea{border-left:3px solid var(--d5)}
+.picks{display:flex;flex-wrap:wrap;gap:5px}
+.pick{font-size:11.5px;padding:3px 9px;border-radius:99px;border:1px solid var(--rule-2);background:var(--surface);color:var(--ink-2)}
+.pick[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:4px}
+.sp{flex:1 1 auto}
+.hint{font-size:12px;color:var(--ink-3)}
+.err{font-size:12.5px;color:var(--bad)}
+
+/* ── 空态 / 汇编 ── */
+.empty{border:1px dashed var(--rule-2);border-radius:var(--r);padding:36px 24px;text-align:center;color:var(--ink-2);background:var(--surface)}
+.empty h3{font-family:var(--f-serif);font-size:18px;color:var(--ink);margin-bottom:8px}
+.empty p{margin:0 auto;max-width:46ch;font-size:13.5px}
+.sect{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);padding:14px 16px}
+.sect h3{font-family:var(--f-serif);font-size:16px;margin-bottom:3px}
+.sect .n{font-size:12px;color:var(--ink-3);margin-bottom:10px;font-variant-numeric:tabular-nums}
+.sect ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px}
+.sect li{font-size:13.5px;line-height:1.55}
+.sect li span{color:var(--ink-2)}
+.banner{background:var(--d1-bg);border:1px solid var(--d1);border-left-width:3px;border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--ink);margin-bottom:14px}
+.banner b{color:var(--d1)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+
+<header class="masthead">
+  <div class="mh-in">
+    <span class="mh-t">今次・是次・該次 文献库</span>
+    <span class="mh-s">BAAL LPF 2027｜三地新闻语篇回指研究</span>
+    <span class="mh-sp"></span>
+  </div>
+  <div class="legend">
+    <span><i style="background:#E0A537"></i>核心论点</span>
+    <span><i style="background:#D26075"></i>关键概念</span>
+    <span><i style="background:#3CA1AD"></i>实证证据</span>
+    <span><i style="background:#5DA66B"></i>让步・反驳</span>
+    <span><i style="background:#9271C3"></i>方法论</span>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="tb-in">
+    <div class="search">
+      <span aria-hidden="true" style="color:var(--ink-3)">⌕</span>
+      <label class="sr" for="q">搜索文献</label>
+      <input id="q" type="search" placeholder="搜作者、标题、出处、分析内容…" autocomplete="off">
+    </div>
+    <div class="counts" id="counts"></div>
+    <div class="seg" role="group" aria-label="视图">
+      <button id="vList" aria-pressed="true">文献列表</button>
+      <button id="vSect" aria-pressed="false">按章节汇编</button>
+    </div>
+    <button class="btn btn-p" id="addBtn">＋ 新增文献</button>
+  </div>
+</div>
+
+<main class="wrap">
+  <nav class="rail" id="rail"></nav>
+  <div class="list" id="list">
+    <div class="empty"><h3>正在载入文献库…</h3><p>第一次打开可能要等一两秒。</p></div>
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+var CATS=['回指与篇章理论','汉语指示与指量结构','区域华语变体','港式中文','新闻语体与语篇','语料库方法与信度','语言政策与规划'];
+var SECTS=['研究背景','文献综述','理论框架','V6 先行项性质','V7 陈述性次类','V8 回指类型','V9 回指距离','V10 篇章功能','V11 时间关系','V12 计划属性','V13 组织参与','语料与方法','信度与编码','三地对比','语言政策讨论','结论'];
+var VERIFY=['待核','已核','存疑'];
+var TYPES=['专著','期刊论文','论文集篇章','词典','学位论文','会议论文','其他'];
+var DIMS=[['thesis','核心论点','k1','d1'],['concept','关键概念','k2','d2'],['evidence','实证证据','k3','d3'],['counter','让步・反驳','k4','d4'],['method','方法论','k5','d5']];
+
+var db=null,user=null,sample=null,canWrite=null;
+var docs=[],ready=false,openId=null,editId=null,view='list',qstr='',fCat='',fVer='',fSect='';
+var el=function(id){return document.getElementById(id)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+
+function blank(){return{authors:'',year:'',title:'',source:'',type:'专著',locator:'',cat:CATS[0],verify:'待核',
+  thesis:'',concept:'',evidence:'',counter:'',method:'',sects:[],quote:'',note:''}}
+
+function matches(d){
+  if(fCat&&d.cat!==fCat)return false;
+  if(fVer&&d.verify!==fVer)return false;
+  if(fSect&&(!d.sects||d.sects.indexOf(fSect)<0))return false;
+  if(qstr){
+    var hay=[d.authors,d.year,d.title,d.source,d.locator,d.thesis,d.concept,d.evidence,d.counter,d.method,d.quote,d.note].join(' ').toLowerCase();
+    if(hay.indexOf(qstr)<0)return false;
+  }
+  return true;
+}
+function sorted(a){return a.slice().sort(function(x,y){
+  var c=(x.d.cat||'').localeCompare(y.d.cat||'','zh');if(c)return c;
+  var yx=parseInt(x.d.year,10)||0,yy=parseInt(y.d.year,10)||0;if(yx!==yy)return yy-yx;
+  return (x.d.authors||'').localeCompare(y.d.authors||'','zh');})}
+
+function vClass(v){return v==='已核'?'v-ok':v==='存疑'?'v-bad':'v-wait'}
+
+function renderCounts(){
+  var n=docs.length,ok=0,wait=0,bad=0;
+  docs.forEach(function(r){var v=r.d.verify;if(v==='已核')ok++;else if(v==='存疑')bad++;else wait++});
+  el('counts').innerHTML='共 <b>'+n+'</b> 条 · 已核 <b>'+ok+'</b> · 待核 <b>'+wait+'</b>'+(bad?' · 存疑 <b>'+bad+'</b>':'');
+}
+function renderRail(){
+  var byCat={},bySect={},byVer={};
+  docs.forEach(function(r){
+    byCat[r.d.cat]=(byCat[r.d.cat]||0)+1;
+    byVer[r.d.verify]=(byVer[r.d.verify]||0)+1;
+    (r.d.sects||[]).forEach(function(s){bySect[s]=(bySect[s]||0)+1});
+  });
+  function group(title,items,cur,setter){
+    var h='<div><h4>'+esc(title)+'</h4><div class="chips">';
+    h+='<button class="chip" data-set="'+setter+'" data-val="" aria-pressed="'+(cur===''?'true':'false')+'">全部<em>'+docs.length+'</em></button>';
+    items.forEach(function(it){
+      var name=it[0],n=it[1];if(!n)return;
+      h+='<button class="chip" data-set="'+setter+'" data-val="'+esc(name)+'" aria-pressed="'+(cur===name?'true':'false')+'">'+esc(name)+'<em>'+n+'</em></button>';
+    });
+    return h+'</div></div>';
+  }
+  el('rail').innerHTML=
+    group('类别',CATS.map(function(c){return[c,byCat[c]||0]}),fCat,'cat')+
+    group('核验状态',VERIFY.map(function(v){return[v,byVer[v]||0]}),fVer,'ver')+
+    group('关联章节',SECTS.map(function(s){return[s,bySect[s]||0]}),fSect,'sect');
+}
+
+function dimHTML(d){
+  var h='<div class="dims">',any=false;
+  DIMS.forEach(function(x){
+    var v=d[x[0]];
+    if(v&&v.trim()){any=true;h+='<div class="dim '+x[2]+'"><b>'+x[1]+'</b>'+esc(v)+'</div>'}
+  });
+  if(!any)h+='<div class="dim e">五维分析尚未填写。展开「编辑」手动填，或用「生成分析草稿」从摘要／原文生成后再核。</div>';
+  return h+'</div>';
+}
+function cardHTML(r){
+  var d=r.d,open=openId===r.id,edit=editId===r.id;
+  var h='<article class="card '+vClass(d.verify)+'" data-id="'+esc(r.id)+'">';
+  h+='<button class="card-h" data-act="toggle" data-id="'+esc(r.id)+'" aria-expanded="'+(open?'true':'false')+'">';
+  h+='<span class="yr">'+esc(d.year||'—')+'</span><span class="card-m">';
+  h+='<span class="ttl">'+esc(d.title||'（未命名）')+'</span>';
+  h+='<div class="meta">'+esc(d.authors||'作者待补')+(d.source?' ・ '+esc(d.source):'')+'</div>';
+  h+='<div class="tags"><span class="tag cat">'+esc(d.cat)+'</span><span class="tag">'+esc(d.type)+'</span>';
+  (d.sects||[]).forEach(function(s){h+='<span class="tag">'+esc(s)+'</span>'});
+  h+='</div></span><span class="vflag">'+esc(d.verify)+'</span></button>';
+  if(open&&!edit){
+    h+='<div class="body">'+dimHTML(d);
+    if(d.quote&&d.quote.trim())h+='<div class="quote">'+esc(d.quote)+'</div>';
+    if(d.locator)h+='<div class="src">出处定位：'+(/^https?:\/\//.test(d.locator)?'<a href="'+esc(d.locator)+'" target="_blank" rel="noopener">'+esc(d.locator)+'</a>':esc(d.locator))+'</div>';
+    if(d.note&&d.note.trim())h+='<div class="src">备注：'+esc(d.note)+'</div>';
+    h+='<div class="rowline">';
+    if(canWrite!==false){
+      h+='<button class="btn btn-sm" data-act="edit" data-id="'+esc(r.id)+'">编辑</button>';
+      if(sample)h+='<button class="btn btn-sm" data-act="gen" data-id="'+esc(r.id)+'">生成分析草稿</button>';
+    }
+    h+='</div></div>';
+  }
+  if(edit)h+='<div class="body">'+formHTML(r.id,d)+'</div>';
+  return h+'</article>';
+}
+function formHTML(id,d){
+  var h='<div class="form" data-form="'+esc(id)+'">';
+  h+='<div class="frow"><div class="f"><label>作者</label><input data-k="authors" value="'+esc(d.authors)+'"></div>'
+   +'<div class="f"><label>年份</label><input data-k="year" inputmode="numeric" value="'+esc(d.year)+'"></div></div>';
+  h+='<div class="f"><label>标题</label><input data-k="title" value="'+esc(d.title)+'"></div>';
+  h+='<div class="f"><label>出处（期刊／出版社／论文集）</label><input data-k="source" value="'+esc(d.source)+'"></div>';
+  h+='<div class="frow"><div class="f"><label>类型</label><select data-k="type">'+TYPES.map(function(t){return'<option'+(d.type===t?' selected':'')+'>'+esc(t)+'</option>'}).join('')+'</select></div>'
+   +'<div class="f"><label>类别</label><select data-k="cat">'+CATS.map(function(c){return'<option'+(d.cat===c?' selected':'')+'>'+esc(c)+'</option>'}).join('')+'</select></div>'
+   +'<div class="f"><label>核验状态</label><select data-k="verify">'+VERIFY.map(function(v){return'<option'+(d.verify===v?' selected':'')+'>'+esc(v)+'</option>'}).join('')+'</select></div></div>';
+  h+='<div class="f"><label>出处定位（DOI／URL／页码）</label><input data-k="locator" value="'+esc(d.locator)+'"></div>';
+  h+='<div class="f"><label>关联章节（可多选）</label><div class="picks" data-picks>'
+   +SECTS.map(function(s){return'<button type="button" class="pick" data-sect="'+esc(s)+'" aria-pressed="'+((d.sects||[]).indexOf(s)>=0?'true':'false')+'">'+esc(s)+'</button>'}).join('')+'</div></div>';
+  DIMS.forEach(function(x){
+    h+='<div class="f '+x[3]+'"><label>'+x[1]+'</label><textarea data-k="'+x[0]+'" rows="2">'+esc(d[x[0]])+'</textarea></div>';
+  });
+  h+='<div class="f"><label>可引用片段</label><textarea data-k="quote" rows="2">'+esc(d.quote)+'</textarea></div>';
+  h+='<div class="f"><label>备注</label><textarea data-k="note" rows="2">'+esc(d.note)+'</textarea></div>';
+  h+='<div class="acts"><button class="btn btn-p btn-sm" data-act="save" data-id="'+esc(id)+'">保存</button>'
+   +'<button class="btn btn-sm" data-act="cancel">取消</button><span class="sp"></span>'
+   +'<button class="btn btn-sm btn-d" data-act="del" data-id="'+esc(id)+'">删除</button></div>';
+  h+='<div class="hint" data-msg></div></div>';
+  return h;
+}
+function sectHTML(){
+  var h='';
+  SECTS.forEach(function(s){
+    var hits=docs.filter(function(r){return (r.d.sects||[]).indexOf(s)>=0&&matches(r.d)});
+    if(!hits.length)return;
+    h+='<section class="sect"><h3>'+esc(s)+'</h3><div class="n">'+hits.length+' 条</div><ul>';
+    sorted(hits).forEach(function(r){
+      var d=r.d;
+      h+='<li><b>'+esc(d.authors||'作者待补')+'</b> '+esc(d.year||'')+'　'+esc(d.title||'')
+        +(d.verify!=='已核'?' <span class="vflag" style="display:inline-block">'+esc(d.verify)+'</span>':'')
+        +(d.thesis?'<br><span>'+esc(d.thesis)+'</span>':'')+'</li>';
+    });
+    h+='</ul></section>';
+  });
+  var un=docs.filter(function(r){return !(r.d.sects||[]).length&&matches(r.d)});
+  if(un.length){
+    h+='<section class="sect"><h3>未关联章节</h3><div class="n">'+un.length+' 条</div><ul>';
+    sorted(un).forEach(function(r){h+='<li><b>'+esc(r.d.authors||'作者待补')+'</b> '+esc(r.d.year||'')+'　'+esc(r.d.title||'')+'</li>'});
+    h+='</ul></section>';
+  }
+  return h||'<div class="empty"><h3>还没有文献关联到章节</h3><p>在任一文献的编辑表单里勾选「关联章节」，这里就会按章节汇总，方便写作时按节取用。</p></div>';
+}
+
+function render(){
+  renderCounts();renderRail();
+  var box=el('list');
+  if(!ready){box.innerHTML='<div class="empty"><h3>正在载入文献库…</h3><p>第一次打开可能要等一两秒。</p></div>';return}
+  if(!docs.length){
+    box.innerHTML='<div class="empty"><h3>文献库还是空的</h3><p>点右上角「＋ 新增文献」添第一条。每条可以记作者、出处、五维分析、可引用片段，以及它支撑论文的哪一节。</p></div>';
+    return;
+  }
+  if(view==='sect'){box.innerHTML=sectHTML();return}
+  var hits=sorted(docs.filter(function(r){return matches(r.d)}));
+  var head='';
+  var nWait=docs.filter(function(r){return r.d.verify!=='已核'}).length;
+  if(nWait)head='<div class="banner"><b>'+nWait+' 条尚未核验。</b>种子条目由模型依领域知识填入，<b>引用前须逐条核对出版信息</b>；核对无误后把状态改为「已核」。</div>';
+  box.innerHTML=head+(hits.length?hits.map(cardHTML).join(''):'<div class="empty"><h3>没有符合条件的文献</h3><p>换个筛选条件，或清空搜索框。</p></div>');
+}
+
+/* ── 写入 ── */
+function collect(id){
+  var f=document.querySelector('[data-form="'+id+'"]');if(!f)return null;
+  var o={};
+  f.querySelectorAll('[data-k]').forEach(function(n){o[n.getAttribute('data-k')]=n.value.trim()});
+  o.sects=[];f.querySelectorAll('[data-sect][aria-pressed="true"]').forEach(function(n){o.sects.push(n.getAttribute('data-sect'))});
+  return o;
+}
+function msg(id,t,bad){
+  var f=document.querySelector('[data-form="'+id+'"]');if(!f)return;
+  var m=f.querySelector('[data-msg]');if(m){m.textContent=t;m.className=bad?'err':'hint'}
+}
+function errCopy(e){
+  var c=e&&e.code;
+  if(c==='invalid_argument')return'没有写入权限，或内容过长。改动未保存。';
+  if(c==='quota_exceeded')return'文献库已满，需先删除一些条目。';
+  if(c==='resource_exhausted')return'操作太频繁，稍等几秒再试。';
+  if(c==='revoked'||c==='not_granted')return'这次会话失去了写入权限，请刷新页面。';
+  return'保存失败，请再试一次。';
+}
+async function save(id){
+  if(!db)return;
+  var o=collect(id);if(!o)return;
+  if(!o.title&&!o.authors){msg(id,'至少填标题或作者。',true);return}
+  o.updated=new Date().toISOString();
+  msg(id,'保存中…');
+  try{await db.collection('refs').doc(id).set(o);editId=null;render()}
+  catch(e){msg(id,errCopy(e),true)}
+}
+async function del(id){
+  var f=document.querySelector('[data-form="'+id+'"]');
+  if(f&&!f.getAttribute('data-confirm')){
+    f.setAttribute('data-confirm','1');
+    var b=f.querySelector('[data-act="del"]');if(b)b.textContent='确认删除？再点一次';
+    msg(id,'删除后无法恢复。');return;
+  }
+  try{await db.collection('refs').doc(id).delete();editId=null;openId=null;render()}
+  catch(e){msg(id,errCopy(e),true)}
+}
+async function addNew(){
+  if(!db){return}
+  var id='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  var d=blank();d.updated=new Date().toISOString();
+  try{await db.collection('refs').doc(id).set(d);openId=id;editId=id;view='list';render();
+    var n=document.querySelector('[data-form="'+id+'"] input[data-k="authors"]');if(n)n.focus();
+  }catch(e){
+    el('list').insertAdjacentHTML('afterbegin','<div class="banner">'+esc(errCopy(e))+'</div>');
+  }
+}
+
+/* ── 生成分析草稿 ── */
+var genCtl=null;
+function genPanel(id){
+  var card=document.querySelector('.card[data-id="'+id+'"] .body');if(!card)return;
+  if(card.querySelector('[data-gen]'))return;
+  var r=docs.filter(function(x){return x.id===id})[0];if(!r)return;
+  var box=document.createElement('div');box.setAttribute('data-gen','1');box.className='form';
+  box.innerHTML='<div class="f"><label>粘贴摘要或关键段落（越具体，分析越可靠）</label>'
+    +'<textarea data-src rows="5" placeholder="把这篇文献的摘要、导论或关键段落贴进来…"></textarea></div>'
+    +'<div class="acts"><button class="btn btn-p btn-sm" data-act="genrun" data-id="'+esc(id)+'">生成五维分析</button>'
+    +'<button class="btn btn-sm" data-act="genstop" hidden>停止</button>'
+    +'<button class="btn btn-sm" data-act="genclose">收起</button></div>'
+    +'<div class="hint" data-genmsg>生成的是草稿，会直接写进编辑表单，保存前请自己改一遍。</div>';
+  card.appendChild(box);
+  box.querySelector('[data-src]').focus();
+}
+async function genRun(id){
+  var card=document.querySelector('.card[data-id="'+id+'"]');if(!card)return;
+  var box=card.querySelector('[data-gen]');if(!box)return;
+  var src=box.querySelector('[data-src]').value.trim();
+  var m=box.querySelector('[data-genmsg]'),stop=box.querySelector('[data-act="genstop"]');
+  if(src.length<40){m.textContent='文字太短，至少贴一段摘要。';m.className='err';return}
+  var r=docs.filter(function(x){return x.id===id})[0];if(!r)return;
+  m.className='hint';m.textContent='思考中…';stop.hidden=false;
+  genCtl=new AbortController();
+  var prompt='你在协助一项关于汉语新闻语篇中「今次／是次／該次」指量回指的研究。下面是一篇参考文献的摘要或节选。\n'
+   +'请只回一个 JSON 对象，键为 thesis, concept, evidence, counter, method，值都是中文字符串：\n'
+   +'thesis=这篇文献的核心论点（一句话）；concept=它提出或依赖的关键概念／术语（逗号分隔）；'
+   +'evidence=它用什么实证证据或数据支撑；counter=它处理了哪些让步或反驳（没有就写"文中未见"）；'
+   +'method=它的方法论（语料、样本、分析程序）。\n'
+   +'只依据给出的文字，不要补充文中没有的内容；无法判断的键写"据所给文字无法判断"。\n\n'
+   +'文献：'+(r.d.authors||'')+' '+(r.d.year||'')+'《'+(r.d.title||'')+'》\n\n节选：\n'+src.slice(0,8000);
+  try{
+    var out=await sample.json(prompt,{signal:genCtl.signal,modelTier:'default',
+      onText:function(){m.textContent='生成中…'}});
+    var f=document.querySelector('[data-form="'+id+'"]');
+    if(!f){editId=id;render();f=document.querySelector('[data-form="'+id+'"]')}
+    DIMS.forEach(function(x){
+      var t=f&&f.querySelector('textarea[data-k="'+x[0]+'"]');
+      if(t&&out&&typeof out[x[0]]==='string')t.value=out[x[0]];
+    });
+    var vb=document.querySelector('[data-form="'+id+'"] [data-genmsg]');
+    if(vb){vb.className='hint';vb.textContent='草稿已填入表单，核对后再按保存。'}
+  }catch(e){
+    var c=e&&e.code;
+    if(c==='cancelled'){m.textContent='已停止。'}
+    else if(c==='not_granted'||c==='sampling_disabled'){m.textContent='这次没有获授权调用 Claude，可手动填写。';m.className='err'}
+    else if(c==='rate_limited'){m.textContent='调用过于频繁，过一会儿再试。';m.className='err'}
+    else if(c==='invalid_json'){m.textContent='返回的内容没法解析，换一段更短的文字再试。';m.className='err'}
+    else{m.textContent='生成失败，可手动填写。';m.className='err'}
+  }finally{stop.hidden=true;genCtl=null}
+}
+
+/* ── 事件 ── */
+document.addEventListener('click',function(ev){
+  var t=ev.target.closest('[data-act],[data-set],[data-sect]');if(!t)return;
+  var act=t.getAttribute('data-act'),id=t.getAttribute('data-id');
+  if(t.hasAttribute('data-sect')){t.setAttribute('aria-pressed',t.getAttribute('aria-pressed')==='true'?'false':'true');return}
+  if(t.hasAttribute('data-set')){
+    var v=t.getAttribute('data-val'),k=t.getAttribute('data-set');
+    if(k==='cat')fCat=v;else if(k==='ver')fVer=v;else fSect=v;
+    render();return;
+  }
+  if(act==='toggle'){openId=openId===id?null:id;if(editId&&editId!==id)editId=null;render();return}
+  if(act==='edit'){editId=id;openId=id;render();return}
+  if(act==='cancel'){editId=null;render();return}
+  if(act==='save'){save(id);return}
+  if(act==='del'){del(id);return}
+  if(act==='gen'){genPanel(id);return}
+  if(act==='genrun'){genRun(id);return}
+  if(act==='genstop'){if(genCtl)genCtl.abort();return}
+  if(act==='genclose'){var b=t.closest('[data-gen]');if(b)b.remove();return}
+});
+el('q').addEventListener('input',function(e){qstr=e.target.value.trim().toLowerCase();render()});
+el('addBtn').addEventListener('click',addNew);
+el('vList').addEventListener('click',function(){view='list';el('vList').setAttribute('aria-pressed','true');el('vSect').setAttribute('aria-pressed','false');render()});
+el('vSect').addEventListener('click',function(){view='sect';el('vSect').setAttribute('aria-pressed','true');el('vList').setAttribute('aria-pressed','false');render()});
+
+/* ── 启动 ── */
+(async function boot(){
+  try{user=await claude.use('user')}catch(e){}
+  try{sample=await claude.use('sample')}catch(e){}
+  if(user){try{canWrite=await user.can('data.write')}catch(e){canWrite=null}}
+  try{db=await claude.use('db')}catch(e){db=null}
+  if(!db){
+    ready=true;docs=[];
+    el('list').innerHTML='<div class="empty"><h3>这次打开读不到文献库</h3><p>可能是未登录，或这个视图没有获得数据权限。登录后刷新即可看到已保存的文献。</p></div>';
+    el('addBtn').disabled=true;return;
+  }
+  if(canWrite===false)el('addBtn').hidden=true;
+  db.collection('refs').onSnapshot(function(snap){
+    docs=snap.docs.map(function(s){var d=s.data()||{};var b=blank();
+      for(var k in b)if(!(k in d))d[k]=b[k];
+      if(!Array.isArray(d.sects))d.sects=[];
+      return{id:s.id,d:d}});
+    ready=true;render();
+  },function(e){
+    ready=true;render();
+    el('list').insertAdjacentHTML('afterbegin','<div class="banner">实时同步中断了，刷新页面可恢复。</div>');
+  });
+})();
+})();
+</script>
+
+</body></html>
