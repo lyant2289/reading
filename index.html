@@ -165,6 +165,16 @@ button{cursor:pointer}
 .banner{background:var(--d1-bg);border:1px solid var(--d1);border-left-width:3px;border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--ink);margin-bottom:14px}
 .banner b{color:var(--d1)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* 逐段双栏批注 */
+.analysis{margin-top:18px;background:#fffdf6;color:#202c40;border:1px solid var(--rule);padding:16px;border-radius:4px}
+.analysis header{background:#192c4f;color:white;padding:14px;margin:-16px -16px 14px}
+.analysis-nav{position:sticky;top:110px;z-index:10;background:#fffdf6;padding:8px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid #ddd}
+.analysis-nav a{color:#243b6b;font-size:12px}.analysis-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;padding:18px 0;border-bottom:1px solid #ddd;scroll-margin-top:190px}
+.original{font-family:var(--f-serif);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9}.annotation{border-left:3px solid var(--d3);padding:12px;background:#e7f3ff;white-space:pre-wrap;overflow-wrap:anywhere}.annotation b{display:block;font-size:12px;margin:8px 0 3px}
+.analysis mark{color:#202c40;padding:1px 2px}.analysis mark.thesis{background:#ffe5a0}.analysis mark.concept{background:#ffd2d8}.analysis mark.evidence{background:#cce6ff}.analysis mark.counter{background:#cdeedb}.analysis mark.method{background:#e0d6ff}
+.paragraph-editor{border:1px solid var(--rule);padding:12px;display:grid;gap:10px}.analysis-summary{margin-top:16px;white-space:pre-wrap}.analysis-summary b{display:block;margin-top:12px}.analysis .legend{color:inherit;padding:0;margin:8px 0}
+@media(max-width:700px){.analysis-row{grid-template-columns:1fr}.analysis-nav{top:150px}}
 </style>
 
 <header class="masthead">
@@ -220,7 +230,7 @@ var el=function(id){return document.getElementById(id)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 
 function blank(){return{authors:'',year:'',title:'',source:'',type:'专著',locator:'',cat:CATS[0],verify:'待核',
-  thesis:'',concept:'',evidence:'',counter:'',method:'',sects:[],quote:'',note:''}}
+  thesis:'',concept:'',evidence:'',counter:'',method:'',sects:[],quote:'',note:'',course:'',fulltext:'',logic:'',claim:'',strongest:'',weakest:'',paragraphs:[]}}
 
 function matches(d){
   if(fCat&&d.cat!==fCat)return false;
@@ -275,6 +285,76 @@ function dimHTML(d){
   if(!any)h+='<div class="dim e">五维分析尚未填写。展开「编辑」手动填，或用「生成分析草稿」从摘要／原文生成后再核。</div>';
   return h+'</div>';
 }
+
+function marked(text){
+  return esc(text).replace(/\[(thesis|concept|evidence|counter|method)\]([\s\S]*?)\[\/\1\]/g,function(_,kind,value){return '<mark class="'+kind+'">'+value+'</mark>'});
+}
+function readingHTML(id,d){
+  var ps=Array.isArray(d.paragraphs)?d.paragraphs:[];
+  if(!ps.length)return '<div class="hint" style="margin-top:16px">逐段批注尚未填写。点击编辑，粘贴原文并建立双栏分析。</div>';
+  var h='<section class="analysis"><header><h3>'+esc(d.title||'未命名文献')+'</h3><div>'+esc(d.course||'课程／周次未填写')+'</div></header><div class="legend">';
+  DIMS.forEach(function(x){h+='<span><i style="background:var(--'+x[3] +')"></i>'+esc(x[1])+'</span>'});
+  h+='</div><nav class="analysis-nav" aria-label="论文章节">';
+  ps.forEach(function(p,i){h+='<a href="#p-'+esc(id)+'-'+i+'">'+esc(p.section||'第 '+(i+1)+' 段')+'</a>'});
+  h+='</nav>';
+  ps.forEach(function(p,i){h+='<section class="analysis-row" id="p-'+esc(id)+'-'+i+'"><div><h4>'+esc(p.section||'第 '+(i+1)+' 段')+'</h4><div class="original">'+marked(p.text||'')+'</div></div><aside class="annotation"><b>段落功能</b>'+esc(p.function||'待填写')+'<b>逻辑角色</b>'+esc(p.role||'待填写')+'<b>论证技巧／潜在漏洞</b>'+esc(p.technique||'待填写')+'</aside></section>'});
+  h+='<footer class="analysis-summary"><h4>论证结构总览</h4>';
+  [['logic','全文逻辑骨架：问题 → 论点 → 证据 → 反驳 → 结论'],['claim','作者核心主张（一句话）'],['strongest','论证最强处'],['weakest','论证最弱处']].forEach(function(x){h+='<b>'+x[1]+'</b>'+esc(d[x[0]]||'待填写')});
+  return h+'</footer></section>';
+}
+function paragraphEditor(p,i){
+  var h='<div class="paragraph-editor" data-paragraph><div class="acts"><b>第 '+(i+1)+' 段</b><span class="sp"></span><button class="btn btn-sm btn-d" data-act="removeparagraph">删除此段</button></div>';
+  [['section','章节名称','input'],['text','论文原文（可选中文字后点击颜色标注）','textarea'],['function','段落功能：引出问题／提供证据／反驳异议／总结','textarea'],['role','逻辑角色：在整体论证链中的位置','textarea'],['technique','论证技巧或潜在漏洞','textarea']].forEach(function(x){h+='<div class="f"><label>'+x[1]+'</label>'+(x[2]==='input'?'<input data-p="'+x[0]+'" value="'+esc(p[x[0]]||'')+'">':'<textarea data-p="'+x[0]+'" rows="'+(x[0]==='text'?5:2)+'">'+esc(p[x[0]]||'')+'</textarea>')+'</div>';if(x[0]==='text'){h+='<div class="acts">';DIMS.forEach(function(dim){h+='<button class="btn btn-sm '+dim[2]+'" data-act="mark" data-kind="'+dim[0]+'">'+dim[1]+'</button>'});h+='</div>'}});
+  return h+'</div>';
+}
+function analysisEditor(d){
+  var h='<h3>双栏原文与逐段批注（全部可编辑）</h3><div class="f"><label>课程／周次</label><input data-k="course" value="'+esc(d.course)+'"></div><div class="f"><label>粘贴论文全文，以空行分隔段落</label><textarea data-k="fulltext" rows="7">'+esc(d.fulltext)+'</textarea></div><div class="acts"><button class="btn btn-sm" data-act="splitparagraphs">从全文建立段落</button><button class="btn btn-sm" data-act="addparagraph">添加一段</button><button class="btn btn-sm" data-act="analysisprompt">获取分析口令</button></div><div class="hint">颜色标注会以 [thesis]…[/thesis] 等标签保存在原文中。修改文字或删除标签即可调整；保存后显示彩色高亮。</div><div data-paragraphs>';
+  (Array.isArray(d.paragraphs)?d.paragraphs:[]).forEach(function(p,i){h+=paragraphEditor(p,i)});
+  h+='</div><div class="f" data-prompt-box hidden><label>复制给 AI 的分析口令（根据原文生成，不预填结论）</label><textarea data-analysis-prompt rows="8" readonly></textarea><label>粘贴 AI 返回的 JSON，再导入可编辑草稿</label><textarea data-analysis-json rows="6"></textarea><button class="btn btn-sm" data-act="importanalysis">导入分析草稿</button></div>';
+  [['logic','全文逻辑骨架：问题 → 论点 → 证据 → 反驳 → 结论'],['claim','作者核心主张（一句话）'],['strongest','论证最强处'],['weakest','论证最弱处']].forEach(function(x){h+='<div class="f"><label>'+x[1]+'</label><textarea data-k="'+x[0]+'" rows="3">'+esc(d[x[0]])+'</textarea></div>'});
+  return h;
+}
+function exportReading(id){
+  var r=docs.filter(function(x){return x.id===id})[0];if(!r)return;
+  var seed={};seed[id]=r.d;
+  var payload=JSON.stringify({key:'reading-export-'+id,rows:seed}).replace(/</g,'\\u003c');
+  var html='<!doctype html>'+document.documentElement.outerHTML;
+  html=html.replace(/<script>window\.readingSeed=[\s\S]*?<\/script>/g,'');
+  html=html.replace('<head>','<head><script>window.readingSeed='+payload+';<'+ '/script>');
+  var url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');
+  a.href=url;a.download=(r.d.title||'文献批注').replace(/[\\/:*?"<>|]/g,'_')+'.html';a.click();setTimeout(function(){URL.revokeObjectURL(url)},1000);
+}
+
+function analysisAction(t,act){
+  var f=t.closest('[data-form]');if(!f)return;
+  var holder=f.querySelector('[data-paragraphs]');
+  if(act==='removeparagraph'){t.closest('[data-paragraph]').remove();return}
+  if(act==='addparagraph'){holder.insertAdjacentHTML('beforeend',paragraphEditor({},holder.children.length));return}
+  if(act==='splitparagraphs'){
+    var text=f.querySelector('[data-k="fulltext"]').value.trim();
+    if(!text){msg(f.dataset.form,'请先粘贴论文原文。',true);return}
+    if(holder.children.length){msg(f.dataset.form,'已有批注未被覆盖；要重新分段，请先删除现有段落。',true);return}
+    text.split(/\n\s*\n/).filter(function(p){return p.trim()}).forEach(function(p,i){holder.insertAdjacentHTML('beforeend',paragraphEditor({text:p.trim()},i))});return;
+  }
+  if(act==='mark'){
+    var input=t.closest('[data-paragraph]').querySelector('[data-p="text"]'),a=input.selectionStart,b=input.selectionEnd;
+    if(a===b){msg(f.dataset.form,'请先选中这段原文里需要高亮的文字。',true);return}
+    var kind=t.dataset.kind;input.setRangeText('['+kind+']'+input.value.slice(a,b)+'[/'+kind+']',a,b,'select');input.focus();return;
+  }
+  if(act==='analysisprompt'){
+    var data=collect(f.dataset.form),box=f.querySelector('[data-prompt-box]');box.hidden=false;
+    box.querySelector('[data-analysis-prompt]').value='请依据以下论文进行纯逻辑分析，逐段对应，不要编造原文或证据。只返回 JSON 对象，字段为 paragraphs（数组，每项含 section 章节、text 原文、function 中文段落功能、role 中文逻辑角色、technique 中文论证技巧或潜在漏洞）、logic 全文逻辑骨架、claim 核心主张一句话、strongest 最强处、weakest 最弱处。保留原文段落；在 text 中用 [thesis]…[/thesis] 标核心论点、[concept]…[/concept] 标概念、[evidence]…[/evidence] 标证据、[counter]…[/counter] 标让步反驳、[method]…[/method] 标方法。没有依据时明确写无法判断。论文名：'+data.title+'\n课程：'+data.course+'\n原文：\n'+(data.fulltext||data.paragraphs.map(function(p){return p.text}).join('\n\n'));return;
+  }
+  if(act==='importanalysis'){
+    try{
+      var raw=f.querySelector('[data-analysis-json]').value.trim().replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'');var data=JSON.parse(raw);
+      if(!Array.isArray(data.paragraphs)||!data.paragraphs.length||!data.paragraphs.every(function(p){return p&&typeof p.text==='string'&&['section','function','role','technique'].every(function(k){return typeof p[k]==='string'})})||!['logic','claim','strongest','weakest'].every(function(k){return typeof data[k]==='string'}))throw new Error('格式不完整');
+      if(holder.children.length){msg(f.dataset.form,'已有段落未被覆盖。请先删除现有段落，再导入草稿。',true);return}
+      holder.innerHTML=data.paragraphs.map(paragraphEditor).join('');['logic','claim','strongest','weakest'].forEach(function(k){f.querySelector('[data-k="'+k+'"]').value=data[k]});msg(f.dataset.form,'分析已导入，所有内容均可修改；请核对后保存。');
+    }catch(e){msg(f.dataset.form,'导入失败：请粘贴完整、符合口令格式的 JSON。',true)}return;
+  }
+}
+
 function cardHTML(r){
   var d=r.d,open=openId===r.id,edit=editId===r.id;
   var h='<article class="card '+vClass(d.verify)+'" data-id="'+esc(r.id)+'">';
@@ -286,12 +366,13 @@ function cardHTML(r){
   (d.sects||[]).forEach(function(s){h+='<span class="tag">'+esc(s)+'</span>'});
   h+='</div></span><span class="vflag">'+esc(d.verify)+'</span></button>';
   if(open&&!edit){
-    h+='<div class="body">'+dimHTML(d);
+    h+='<div class="body">'+dimHTML(d)+readingHTML(r.id,d);
     if(d.quote&&d.quote.trim())h+='<div class="quote">'+esc(d.quote)+'</div>';
     if(d.locator)h+='<div class="src">出处定位：'+(/^https?:\/\//.test(d.locator)?'<a href="'+esc(d.locator)+'" target="_blank" rel="noopener">'+esc(d.locator)+'</a>':esc(d.locator))+'</div>';
     if(d.note&&d.note.trim())h+='<div class="src">备注：'+esc(d.note)+'</div>';
     h+='<div class="rowline">';
     if(canWrite!==false){
+      h+='<button class="btn btn-sm" data-act="exportreading" data-id="'+esc(r.id)+'">导出可编辑 HTML</button>';
       h+='<button class="btn btn-sm" data-act="edit" data-id="'+esc(r.id)+'">编辑</button>';
       if(sample)h+='<button class="btn btn-sm" data-act="gen" data-id="'+esc(r.id)+'">生成分析草稿</button>';
     }
@@ -317,6 +398,7 @@ function formHTML(id,d){
   });
   h+='<div class="f"><label>可引用片段</label><textarea data-k="quote" rows="2">'+esc(d.quote)+'</textarea></div>';
   h+='<div class="f"><label>备注</label><textarea data-k="note" rows="2">'+esc(d.note)+'</textarea></div>';
+  h+=analysisEditor(d);
   h+='<div class="acts"><button class="btn btn-p btn-sm" data-act="save" data-id="'+esc(id)+'">保存</button>'
    +'<button class="btn btn-sm" data-act="cancel">取消</button><span class="sp"></span>'
    +'<button class="btn btn-sm btn-d" data-act="del" data-id="'+esc(id)+'">删除</button></div>';
@@ -368,6 +450,7 @@ function collect(id){
   var o={};
   f.querySelectorAll('[data-k]').forEach(function(n){o[n.getAttribute('data-k')]=n.value.trim()});
   o.sects=[];f.querySelectorAll('[data-sect][aria-pressed="true"]').forEach(function(n){o.sects.push(n.getAttribute('data-sect'))});
+  o.paragraphs=Array.from(f.querySelectorAll('[data-paragraph]')).map(function(row){var p={};row.querySelectorAll('[data-p]').forEach(function(n){p[n.dataset.p]=n.value});return p});
   return o;
 }
 function msg(id,t,bad){
@@ -405,7 +488,9 @@ async function addNew(){
   if(!db){return}
   var id='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   var d=blank();d.updated=new Date().toISOString();
-  try{await db.collection('refs').doc(id).set(d);openId=id;editId=id;view='list';render();
+  try{await db.collection('refs').doc(id).set(d);openId=id;editId=id;view='list';
+    qstr='';fCat='';fVer='';fSect='';el('q').value='';
+    el('vList').setAttribute('aria-pressed','true');el('vSect').setAttribute('aria-pressed','false');render();
     var n=document.querySelector('[data-form="'+id+'"] input[data-k="authors"]');if(n)n.focus();
   }catch(e){
     el('list').insertAdjacentHTML('afterbegin','<div class="banner">'+esc(errCopy(e))+'</div>');
@@ -475,6 +560,8 @@ document.addEventListener('click',function(ev){
     if(k==='cat')fCat=v;else if(k==='ver')fVer=v;else fSect=v;
     render();return;
   }
+  if(['removeparagraph','addparagraph','splitparagraphs','mark','analysisprompt','importanalysis'].indexOf(act)>=0){analysisAction(t,act);return}
+  if(act==='exportreading'){exportReading(id);return}
   if(act==='toggle'){openId=openId===id?null:id;if(editId&&editId!==id)editId=null;render();return}
   if(act==='edit'){editId=id;openId=id;render();return}
   if(act==='cancel'){editId=null;render();return}
@@ -490,12 +577,54 @@ el('addBtn').addEventListener('click',addNew);
 el('vList').addEventListener('click',function(){view='list';el('vList').setAttribute('aria-pressed','true');el('vSect').setAttribute('aria-pressed','false');render()});
 el('vSect').addEventListener('click',function(){view='sect';el('vSect').setAttribute('aria-pressed','true');el('vList').setAttribute('aria-pressed','false');render()});
 
+/* 下载后的独立页面使用浏览器本地存储；平台页面继续使用原数据库。 */
+function localDatabase(){
+  var key=window.readingSeed?window.readingSeed.key:'jinci-shici-gaici-refs-v1';
+  var raw=localStorage.getItem(key);
+  var rows=raw?JSON.parse(raw):(window.readingSeed?window.readingSeed.rows:{});
+  if(!rows||typeof rows!=='object'||Array.isArray(rows))throw new Error('本地数据格式异常');
+  var probe=key+'-probe';localStorage.setItem(probe,'1');localStorage.removeItem(probe);
+  var listeners=[];
+  function emit(){
+    var snapshot={docs:Object.keys(rows).map(function(id){
+      return{id:id,data:function(){return JSON.parse(JSON.stringify(rows[id]))}};
+    })};
+    listeners.forEach(function(fn){fn(snapshot)});
+  }
+  function write(id,value,remove){
+    var next=Object.assign({},rows);
+    if(remove)delete next[id];else next[id]=JSON.parse(JSON.stringify(value));
+    try{localStorage.setItem(key,JSON.stringify(next))}
+    catch(e){if(e.name==='QuotaExceededError')e.code='quota_exceeded';throw e}
+    rows=next;emit();
+  }
+  return{collection:function(){return{
+    doc:function(id){return{
+      set:async function(value){write(id,value,false)},
+      delete:async function(){write(id,null,true)}
+    }},
+    onSnapshot:function(fn){listeners.push(fn);emit()}
+  }}};
+}
+
 /* ── 启动 ── */
 (async function boot(){
+  var standalone=!!window.readingSeed||typeof claude==='undefined'||typeof claude.use!=='function';
+  if(!standalone){
   try{user=await claude.use('user')}catch(e){}
   try{sample=await claude.use('sample')}catch(e){}
   if(user){try{canWrite=await user.can('data.write')}catch(e){canWrite=null}}
   try{db=await claude.use('db')}catch(e){db=null}
+  }else{
+    try{
+      db=localDatabase();canWrite=true;
+      el('list').insertAdjacentHTML('beforebegin','<div class="banner">本地模式：文献保存在当前浏览器中，不会同步到 Claude。请勿清除浏览器数据。</div>');
+    }catch(e){
+      ready=true;el('addBtn').disabled=true;
+      el('list').innerHTML='<div class="empty"><h3>无法读取或写入本地文献库</h3><p>请允许浏览器存储数据，并确认已有数据格式正常；已有数据未被覆盖。</p></div>';
+      return;
+    }
+  }
   if(!db){
     ready=true;docs=[];
     el('list').innerHTML='<div class="empty"><h3>这次打开读不到文献库</h3><p>可能是未登录，或这个视图没有获得数据权限。登录后刷新即可看到已保存的文献。</p></div>';
