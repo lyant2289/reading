@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#F7F4EC;color:#18231F}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#F7F4EC;color:#18231F}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>今次是次該次 文献库</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -166,6 +166,9 @@ button{cursor:pointer}
 .banner b{color:var(--d1)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
+
+.import-dialog{width:min(680px,calc(100% - 24px));max-height:90vh;border:1px solid var(--rule);border-radius:12px;background:var(--surface);color:var(--ink);padding:24px;overflow:auto}.import-dialog::backdrop{background:#192c4f88}.import-dialog h3{margin-bottom:8px}.import-drop{display:block;padding:24px;border:2px dashed var(--rule-2);background:var(--surface-2);border-radius:8px;margin:16px 0}.import-drop input{max-width:100%}.import-dialog details{margin:16px 0}.import-dialog textarea{white-space:pre-wrap}.import-status{margin:12px 0;white-space:pre-wrap}
+
 /* 逐段双栏批注 */
 .analysis{margin-top:18px;background:#fffdf6;color:#202c40;border:1px solid var(--rule);padding:16px;border-radius:4px}
 .analysis header{background:#192c4f;color:white;padding:14px;margin:-16px -16px 14px}
@@ -214,6 +217,17 @@ button{cursor:pointer}
     <div class="empty"><h3>正在载入文献库…</h3><p>第一次打开可能要等一两秒。</p></div>
   </div>
 </main>
+
+<dialog id="importDialog" class="import-dialog" aria-labelledby="importTitle">
+<h3 id="importTitle">上传 PDF，导入文献</h3><p class="hint">自动读取文字和文献信息，确认后再加入文献库。信息与批注均可继续编辑。</p>
+<label class="import-drop">选择 PDF 文件<br><input id="pdfFile" type="file" accept="application/pdf,.pdf"></label>
+<div id="importStatus" class="import-status" role="status" aria-live="polite">支持带文字层的 PDF；扫描件需要先做 OCR。文件在浏览器内读取；识别到 DOI 时查询公开书目信息。提取的文字保存在当前浏览器。</div>
+<div id="importPreview" hidden><div class="frow"><div class="f"><label for="importName">标题</label><input id="importName"></div><div class="f"><label for="importAuthors">作者</label><input id="importAuthors"></div><div class="f"><label for="importYear">年份</label><input id="importYear"></div></div>
+<details><summary>查看／修改提取的原文</summary><div class="f"><textarea id="importText" rows="12"></textarea></div></details>
+<p class="hint">导入会自动建立原文段落。中文逻辑批注尚未生成，可在编辑中补充或导入分析草稿。</p></div>
+<details><summary>没有 PDF？粘贴原文导入</summary><div class="f"><textarea id="pasteImport" rows="6" placeholder="粘贴标题、作者及论文原文…"></textarea></div><button type="button" id="pastePreview" class="btn">预览粘贴内容</button></details>
+<div class="acts"><button id="confirmImport" class="btn btn-p" disabled>确认导入</button><button id="closeImport" class="btn">取消</button></div>
+</dialog>
 
 <script>
 (function(){
@@ -484,17 +498,98 @@ async function del(id){
   try{await db.collection('refs').doc(id).delete();editId=null;openId=null;render()}
   catch(e){msg(id,errCopy(e),true)}
 }
-async function addNew(){
-  if(!db){return}
+
+var importDraft=null,importBusy=false,importTask=0;
+function addNew(){
+  if(!db)return;
+  if(el('importDialog').open)return;
+  importDraft=null;el('importPreview').hidden=true;el('confirmImport').disabled=true;
+  el('pdfFile').value='';el('pasteImport').value='';
+  el('importStatus').textContent='选择 PDF 后会先显示预览，不会立即写入文献库。';
+  el('importDialog').showModal();
+}
+function paragraphsFromText(text){
+  return text.trim().split(/\n\s*\n/).filter(function(p){return p.trim()}).map(function(p,i){return{section:'第 '+(i+1)+' 段',text:p.trim(),function:'',role:'',technique:''}});
+}
+function previewImport(text,title,authors){
+  importDraft=blank();importDraft.type='期刊论文';
+  el('importName').value=title||text.split('\n').filter(function(x){return x.trim()})[0]||'未命名文献';
+  el('importAuthors').value=authors||'';
+  var year=text.slice(0,3000).match(/\b(?:19|20)\d{2}\b/);el('importYear').value=year?year[0]:'';
+  el('importText').value=text;el('importPreview').hidden=false;el('confirmImport').disabled=false;
+  el('importStatus').textContent='已读取 '+text.length+' 字。请检查标题、作者和年份，再确认导入。';
+}
+function pdfPageText(items){
+  var lines=[],line=null;
+  items.forEach(function(item){
+    if(!item.str)return;
+    var y=item.transform[5],x=item.transform[4];
+    if(!line||Math.abs(y-line.y)>Math.max(3,Math.abs(item.height||10)*0.4)){line={y:y,height:Math.abs(item.height||10),parts:[]};lines.push(line)}
+    line.parts.push({x:x,text:item.str,width:item.width||0});
+  });
+  return lines.map(function(l,i){
+    var previous=lines[i-1],prefix=i?(previous.y-l.y>Math.max(previous.height,l.height)*1.8?'\n\n':'\n'):'';
+    var text='';l.parts.forEach(function(part,j){var before=l.parts[j-1];if(before&&part.x-(before.x+before.width)>2)text+=' ';text+=part.text});
+    return prefix+text;
+  }).join('');
+}
+async function importPDF(file){
+  if(!file||importBusy)return;
+  importBusy=true;var task=++importTask;el('confirmImport').disabled=true;el('importPreview').hidden=true;importDraft=null;
+  var pdf=null;
+  try{
+    if(file.size>40*1024*1024)throw new Error('文件超过 40 MB，请先压缩 PDF。');
+    el('importStatus').textContent='正在加载 PDF 读取工具…';
+    var base=location.protocol==='file:'?'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/':new URL('./vendor/',location.href).href;
+    var lib=await import(base+'pdf.mjs');lib.GlobalWorkerOptions.workerSrc=base+'pdf.worker.mjs';
+    pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise;
+    var pages=[],firstItems=[];
+    for(var i=1;i<=pdf.numPages;i++){
+      if(task!==importTask)return;
+      el('importStatus').textContent='正在读取第 '+i+' / '+pdf.numPages+' 页…';
+      var page=await pdf.getPage(i),content=await page.getTextContent();
+      if(i===1)firstItems=content.items;
+      pages.push(pdfPageText(content.items));page.cleanup();
+    }
+    if(task!==importTask)return;
+    var text=pages.join('\n\n').trim();
+    if(text.replace(/\s/g,'').length<40)throw new Error('没有提取到足够文字。这可能是扫描版 PDF，请先做 OCR 后再上传。');
+    if((text.match(/\uFFFD/g)||[]).length>text.length*0.01)throw new Error('PDF 文字编码异常，请尝试导出带文字层的 PDF 或粘贴原文。');
+    var metadata=await pdf.getMetadata(),info=metadata.info||{},title=info.Title||'';
+    if(!title.trim()||/^(untitled|document|microsoft|word|打印)/i.test(title)){
+      var candidates=firstItems.filter(function(x){return x.str&&x.str.trim().length>4}).slice(0,30);
+      var size=Math.max.apply(null,candidates.map(function(x){return Math.abs(x.height||0)}));
+      title=candidates.filter(function(x){return Math.abs(x.height||0)>=size*0.9}).map(function(x){return x.str}).join(' ').trim()||file.name.replace(/\.pdf$/i,'');
+    }
+    var authors=info.Author||'',bibliography=null;
+    var doiMatch=text.slice(0,20000).match(/10\.\d{4,9}\/[-._;()/:A-Z0-9]+/i);
+    if(doiMatch){
+      var doi=doiMatch[0].replace(/[.,;]+$/,'');
+      el('importStatus').textContent='已提取原文，正在根据 DOI 补全文献信息…';
+      var controller=new AbortController(),timer=setTimeout(function(){controller.abort()},8000);
+      try{var response=await fetch('https://api.crossref.org/works/'+encodeURIComponent(doi),{signal:controller.signal});
+        if(response.ok){bibliography=(await response.json()).message;if(bibliography){title=(bibliography.title||[])[0]||title;authors=(bibliography.author||[]).map(function(a){return [a.given,a.family].filter(Boolean).join(' ')||a.name||''}).filter(Boolean).join('；')||authors}}
+      }catch(e){}finally{clearTimeout(timer)}
+    }
+    if(task!==importTask)return;
+    previewImport(text,title,authors);
+    if(bibliography){var date=bibliography.published||bibliography.issued;if(date&&date['date-parts']&&date['date-parts'][0])el('importYear').value=date['date-parts'][0][0]||'';importDraft.source=(bibliography['container-title']||[])[0]||bibliography.publisher||'';importDraft.locator=bibliography.DOI?'https://doi.org/'+bibliography.DOI:'';if(bibliography.type==='book'||bibliography.type==='monograph')importDraft.type='专著'}
+  }catch(e){if(task===importTask){el('importStatus').textContent=e.name==='PasswordException'?'PDF 有密码保护，请先解锁文件再上传。':(e.message||'PDF 读取失败，请换一个文件再试。');el('confirmImport').disabled=true}}
+  finally{if(pdf)await pdf.destroy();importBusy=false}
+}
+async function confirmImport(){
+  if(!db||!importDraft||importBusy)return;
+  var text=el('importText').value.trim(),title=el('importName').value.trim();
+  if(!title||!text){el('importStatus').textContent='请填写标题并保留至少一段原文。';return}
+  var d=Object.assign(blank(),importDraft,{title:title,authors:el('importAuthors').value.trim(),year:el('importYear').value.trim(),fulltext:text,paragraphs:paragraphsFromText(text),updated:new Date().toISOString()});
   var id='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-  var d=blank();d.updated=new Date().toISOString();
-  try{await db.collection('refs').doc(id).set(d);openId=id;editId=id;view='list';
-    qstr='';fCat='';fVer='';fSect='';el('q').value='';
-    el('vList').setAttribute('aria-pressed','true');el('vSect').setAttribute('aria-pressed','false');render();
-    var n=document.querySelector('[data-form="'+id+'"] input[data-k="authors"]');if(n)n.focus();
-  }catch(e){
-    el('list').insertAdjacentHTML('afterbegin','<div class="banner">'+esc(errCopy(e))+'</div>');
-  }
+  el('confirmImport').disabled=true;
+  try{
+    await db.collection('refs').doc(id).set(d);
+    openId=id;editId=null;view='list';qstr='';fCat='';fVer='';fSect='';el('q').value='';
+    el('vList').setAttribute('aria-pressed','true');el('vSect').setAttribute('aria-pressed','false');render();el('importDialog').close();
+    var card=document.querySelector('.card[data-id="'+id+'"]');if(card)card.scrollIntoView({block:'start'});
+  }catch(e){el('importStatus').textContent=errCopy(e);el('confirmImport').disabled=false}
 }
 
 /* ── 生成分析草稿 ── */
@@ -574,6 +669,11 @@ document.addEventListener('click',function(ev){
 });
 el('q').addEventListener('input',function(e){qstr=e.target.value.trim().toLowerCase();render()});
 el('addBtn').addEventListener('click',addNew);
+el('pdfFile').addEventListener('change',function(e){importPDF(e.target.files[0])});
+el('confirmImport').addEventListener('click',confirmImport);
+el('closeImport').addEventListener('click',function(){importTask++;el('importDialog').close()});
+el('importDialog').addEventListener('cancel',function(){importTask++});
+el('pastePreview').addEventListener('click',function(){if(importBusy)return;var text=el('pasteImport').value.trim();if(text.length<40){el('importStatus').textContent='请粘贴至少一段原文。';return}previewImport(text,'','')});
 el('vList').addEventListener('click',function(){view='list';el('vList').setAttribute('aria-pressed','true');el('vSect').setAttribute('aria-pressed','false');render()});
 el('vSect').addEventListener('click',function(){view='sect';el('vSect').setAttribute('aria-pressed','true');el('vList').setAttribute('aria-pressed','false');render()});
 
