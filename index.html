@@ -540,8 +540,10 @@ async function importPDF(file){
   try{
     if(file.size>40*1024*1024)throw new Error('文件超过 40 MB，请先压缩 PDF。');
     el('importStatus').textContent='正在加载 PDF 读取工具…';
-    var base=location.protocol==='file:'?'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/':new URL('./vendor/',location.href).href;
-    var lib=await import(base+'pdf.mjs');lib.GlobalWorkerOptions.workerSrc=base+'pdf.worker.mjs';
+    var standaloneFile=location.protocol==='file:';
+    var base=standaloneFile?'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/legacy/build/':new URL('./vendor/',location.href).href;
+    var lib=await import(base+(standaloneFile?'pdf.mjs':'pdf-compat.mjs'));
+    lib.GlobalWorkerOptions.workerSrc=base+(standaloneFile?'pdf.worker.mjs':'pdf.worker-compat.mjs');
     pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise;
     var pages=[],firstItems=[];
     for(var i=1;i<=pdf.numPages;i++){
@@ -575,7 +577,7 @@ async function importPDF(file){
     previewImport(text,title,authors);
     if(bibliography){var date=bibliography.published||bibliography.issued;if(date&&date['date-parts']&&date['date-parts'][0])el('importYear').value=date['date-parts'][0][0]||'';importDraft.source=(bibliography['container-title']||[])[0]||bibliography.publisher||'';importDraft.locator=bibliography.DOI?'https://doi.org/'+bibliography.DOI:'';if(bibliography.type==='book'||bibliography.type==='monograph')importDraft.type='专著'}
   }catch(e){if(task===importTask){el('importStatus').textContent=e.name==='PasswordException'?'PDF 有密码保护，请先解锁文件再上传。':(e.message||'PDF 读取失败，请换一个文件再试。');el('confirmImport').disabled=true}}
-  finally{if(pdf)await pdf.destroy();importBusy=false}
+  finally{try{if(pdf)await pdf.destroy()}catch(e){}finally{importBusy=false}}
 }
 async function confirmImport(){
   if(!db||!importDraft||importBusy)return;
