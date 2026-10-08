@@ -89,9 +89,9 @@ button{cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
 
 /* ── 主体 ── */
-.wrap{max-width:var(--maxw);margin:0 auto;padding-inline:20px;padding-block:22px 64px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:28px;align-items:start}
-@media (max-width:860px){.wrap{grid-template-columns:1fr;gap:16px}}
-.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 58px);display:flex;flex-direction:column;gap:18px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding-inline:20px;padding-block:22px 64px;display:grid;grid-template-columns:200px minmax(0,1fr);grid-template-areas:"filters content";gap:28px;align-items:start}
+@media (max-width:860px){.wrap{grid-template-columns:1fr;grid-template-areas:"filters" "content";gap:16px}}
+.rail{grid-area:filters;position:sticky;top:calc(env(safe-area-inset-top,0px) + 58px);display:flex;flex-direction:column;gap:18px}
 @media (max-width:860px){.rail{position:static;flex-direction:row;flex-wrap:wrap;gap:10px}}
 .rail h4{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:7px}
 .chips{display:flex;flex-direction:column;gap:3px}
@@ -101,7 +101,7 @@ button{cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--surface);border-color:var(--rule-2);color:var(--ink);font-weight:500}
 .chip em{font-style:normal;color:var(--ink-3);font-size:11.5px;font-variant-numeric:tabular-nums}
 
-.list{display:flex;flex-direction:column;gap:12px;min-width:0}
+.list{grid-area:content;display:flex;flex-direction:column;gap:12px;min-width:0}
 .card{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);border-left:3px solid var(--rule-2)}
 .card.v-ok{border-left-color:var(--ok)} .card.v-wait{border-left-color:var(--warn)} .card.v-bad{border-left-color:var(--bad)}
 .card-h{display:flex;gap:12px;align-items:flex-start;padding:13px 15px;width:100%;background:transparent;border:0;text-align:left}
@@ -172,8 +172,8 @@ button{cursor:pointer}
 /* 逐段双栏批注 */
 .analysis{margin-top:18px;background:#fffdf6;color:#202c40;border:1px solid var(--rule);padding:16px;border-radius:4px}
 .analysis header{background:#192c4f;color:white;padding:14px;margin:-16px -16px 14px}
-.analysis-nav{position:sticky;top:110px;z-index:10;background:#fffdf6;padding:8px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid #ddd}
-.analysis-nav a{color:#243b6b;font-size:12px}.analysis-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;padding:18px 0;border-bottom:1px solid #ddd;scroll-margin-top:190px}
+.analysis-nav{position:sticky;top:72px;z-index:10;background:#fffdf6;padding:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid #ddd}
+.analysis-nav select{flex:1;min-width:0;max-width:100%;border:1px solid #c8d4ea;padding:6px;background:#fff;color:#243b6b}.analysis-nav label{font-size:12px}.storage-banner{max-width:1140px;margin:16px auto 0;width:calc(100% - 40px)}.analysis-row.unannotated{grid-template-columns:1fr}.analysis-state{padding:10px 12px;background:#eef3ff;color:#243b6b;font-size:13px;margin:12px 0}.analysis-row>div{min-width:0}.original-raw{font-family:var(--f-serif);white-space:pre-wrap;font-size:13px;margin-top:8px}.analysis details{margin-top:10px;font-size:12px}.analysis-summary{overflow-wrap:anywhere}.analysis-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;padding:18px 0;border-bottom:1px solid #ddd;scroll-margin-top:190px}
 .original{font-family:var(--f-serif);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9}.annotation{border-left:3px solid var(--d3);padding:12px;background:#e7f3ff;white-space:pre-wrap;overflow-wrap:anywhere}.annotation b{display:block;font-size:12px;margin:8px 0 3px}
 .analysis mark{color:#202c40;padding:1px 2px}.analysis mark.thesis{background:#ffe5a0}.analysis mark.concept{background:#ffd2d8}.analysis mark.evidence{background:#cce6ff}.analysis mark.counter{background:#cdeedb}.analysis mark.method{background:#e0d6ff}
 .paragraph-editor{border:1px solid var(--rule);padding:12px;display:grid;gap:10px}.analysis-summary{margin-top:16px;white-space:pre-wrap}.analysis-summary b{display:block;margin-top:12px}.analysis .legend{color:inherit;padding:0;margin:8px 0}
@@ -303,18 +303,37 @@ function dimHTML(d){
 function marked(text){
   return esc(text).replace(/\[(thesis|concept|evidence|counter|method)\]([\s\S]*?)\[\/\1\]/g,function(_,kind,value){return '<mark class="'+kind+'">'+value+'</mark>'});
 }
+
+function readingText(text){
+  return String(text||'').replace(/([A-Za-z])-\n(?=[a-z])/g,'$1').split(/\n\s*\n/).map(function(block){
+    return block.split('\n').map(function(line){return line.trim()}).filter(Boolean).reduce(function(result,line){
+      if(!result)return line;
+      if(/^(?:[•●▪]|\d+[.)、])\s*/.test(line))return result+'\n'+line;
+      return result+(/[\u3400-\u9fff]$/.test(result)&&/^[\u3400-\u9fff，。；：]/.test(line)?'':' ')+line;
+    },'');
+  }).join('\n\n');
+}
 function readingHTML(id,d){
   var ps=Array.isArray(d.paragraphs)?d.paragraphs:[];
-  if(!ps.length)return '<div class="hint" style="margin-top:16px">逐段批注尚未填写。点击编辑，粘贴原文并建立双栏分析。</div>';
-  var h='<section class="analysis"><header><h3>'+esc(d.title||'未命名文献')+'</h3><div>'+esc(d.course||'课程／周次未填写')+'</div></header><div class="legend">';
-  DIMS.forEach(function(x){h+='<span><i style="background:var(--'+x[3] +')"></i>'+esc(x[1])+'</span>'});
-  h+='</div><nav class="analysis-nav" aria-label="论文章节">';
-  ps.forEach(function(p,i){h+='<a href="#p-'+esc(id)+'-'+i+'">'+esc(p.section||'第 '+(i+1)+' 段')+'</a>'});
-  h+='</nav>';
-  ps.forEach(function(p,i){h+='<section class="analysis-row" id="p-'+esc(id)+'-'+i+'"><div><h4>'+esc(p.section||'第 '+(i+1)+' 段')+'</h4><div class="original">'+marked(p.text||'')+'</div></div><aside class="annotation"><b>段落功能</b>'+esc(p.function||'待填写')+'<b>逻辑角色</b>'+esc(p.role||'待填写')+'<b>论证技巧／潜在漏洞</b>'+esc(p.technique||'待填写')+'</aside></section>'});
-  h+='<footer class="analysis-summary"><h4>论证结构总览</h4>';
-  [['logic','全文逻辑骨架：问题 → 论点 → 证据 → 反驳 → 结论'],['claim','作者核心主张（一句话）'],['strongest','论证最强处'],['weakest','论证最弱处']].forEach(function(x){h+='<b>'+x[1]+'</b>'+esc(d[x[0]]||'待填写')});
-  return h+'</footer></section>';
+  if(!ps.length)return '<div class="hint" style="margin-top:16px">尚未导入论文原文。点击编辑添加原文。</div>';
+  var hasAnalysis=ps.some(function(p){return p.function||p.role||p.technique});
+  var h='<section class="analysis"><header><h3>'+esc(d.title||'未命名文献')+'</h3>'+(d.course?'<div>'+esc(d.course)+'</div>':'')+'</header>';
+  h+='<div class="analysis-state">已提取原文 · '+ps.length+' 段'+(hasAnalysis?' · 右栏为已有中文批注':' · 尚未生成中文分析，当前显示原文。可点击「编辑」导入分析草稿；段落编号只是阅读定位。')+'</div>';
+  if(hasAnalysis){h+='<div class="legend">';DIMS.forEach(function(x){h+='<span><i style="background:var(--'+x[3]+')"></i>'+esc(x[1])+'</span>'});h+='</div>'}
+  h+='<nav class="analysis-nav" aria-label="段落跳转"><label for="jump-'+esc(id)+'">跳到</label><select id="jump-'+esc(id)+'" data-jump>';
+  ps.forEach(function(p,i){h+='<option value="p-'+esc(id)+'-'+i+'">'+esc(p.section||'第 '+(i+1)+' 段')+'</option>'});
+  h+='</select><button class="btn btn-sm" data-act="jump">前往</button></nav>';
+  ps.forEach(function(p,i){
+    var annotated=!!(p.function||p.role||p.technique);
+    h+='<section class="analysis-row'+(annotated?'':' unannotated')+'" id="p-'+esc(id)+'-'+i+'"><div><h4>'+esc(p.section||'第 '+(i+1)+' 段')+'</h4><div class="original">'+marked(readingText(p.text))+'</div><details><summary>查看保留换行的提取原文</summary><div class="original-raw">'+marked(p.text||'')+'</div></details></div>';
+    if(annotated)h+='<aside class="annotation"><b>段落功能</b>'+esc(p.function||'尚未分析')+'<b>逻辑角色</b>'+esc(p.role||'尚未分析')+'<b>论证技巧／潜在漏洞</b>'+esc(p.technique||'尚未分析')+'</aside>';
+    h+='</section>';
+  });
+  if(d.logic||d.claim||d.strongest||d.weakest){
+    h+='<footer class="analysis-summary"><h4>论证结构总览</h4>';
+    [['logic','全文逻辑骨架：问题 → 论点 → 证据 → 反驳 → 结论'],['claim','作者核心主张（一句话）'],['strongest','论证最强处'],['weakest','论证最弱处']].forEach(function(x){if(d[x[0]])h+='<b>'+x[1]+'</b>'+esc(d[x[0]])});h+='</footer>';
+  }
+  return h+'</section>';
 }
 function paragraphEditor(p,i){
   var h='<div class="paragraph-editor" data-paragraph><div class="acts"><b>第 '+(i+1)+' 段</b><span class="sp"></span><button class="btn btn-sm btn-d" data-act="removeparagraph">删除此段</button></div>';
@@ -380,17 +399,19 @@ function cardHTML(r){
   (d.sects||[]).forEach(function(s){h+='<span class="tag">'+esc(s)+'</span>'});
   h+='</div></span><span class="vflag">'+esc(d.verify)+'</span></button>';
   if(open&&!edit){
-    h+='<div class="body">'+dimHTML(d)+readingHTML(r.id,d);
-    if(d.quote&&d.quote.trim())h+='<div class="quote">'+esc(d.quote)+'</div>';
-    if(d.locator)h+='<div class="src">出处定位：'+(/^https?:\/\//.test(d.locator)?'<a href="'+esc(d.locator)+'" target="_blank" rel="noopener">'+esc(d.locator)+'</a>':esc(d.locator))+'</div>';
-    if(d.note&&d.note.trim())h+='<div class="src">备注：'+esc(d.note)+'</div>';
+    h+='<div class="body">';
     h+='<div class="rowline">';
     if(canWrite!==false){
       h+='<button class="btn btn-sm" data-act="exportreading" data-id="'+esc(r.id)+'">导出可编辑 HTML</button>';
-      h+='<button class="btn btn-sm" data-act="edit" data-id="'+esc(r.id)+'">编辑</button>';
+      h+='<button class="btn btn-sm" data-act="edit" data-id="'+esc(r.id)+'">编辑信息与批注</button>';
       if(sample)h+='<button class="btn btn-sm" data-act="gen" data-id="'+esc(r.id)+'">生成分析草稿</button>';
     }
-    h+='</div></div>';
+    h+='</div>';
+    h+=((d.paragraphs||[]).length&&!DIMS.some(function(x){return d[x[0]]})?'':dimHTML(d))+readingHTML(r.id,d);
+    if(d.quote&&d.quote.trim())h+='<div class="quote">'+esc(d.quote)+'</div>';
+    if(d.locator)h+='<div class="src">出处定位：'+(/^https?:\/\//.test(d.locator)?'<a href="'+esc(d.locator)+'" target="_blank" rel="noopener">'+esc(d.locator)+'</a>':esc(d.locator))+'</div>';
+    if(d.note&&d.note.trim())h+='<div class="src">备注：'+esc(d.note)+'</div>';
+    h+='</div>';
   }
   if(edit)h+='<div class="body">'+formHTML(r.id,d)+'</div>';
   return h+'</article>';
@@ -658,6 +679,7 @@ document.addEventListener('click',function(ev){
     render();return;
   }
   if(['removeparagraph','addparagraph','splitparagraphs','mark','analysisprompt','importanalysis'].indexOf(act)>=0){analysisAction(t,act);return}
+  if(act==='jump'){var select=t.closest('.analysis-nav').querySelector('[data-jump]');var target=document.getElementById(select.value);if(target)target.scrollIntoView({block:'start'});return}
   if(act==='exportreading'){exportReading(id);return}
   if(act==='toggle'){openId=openId===id?null:id;if(editId&&editId!==id)editId=null;render();return}
   if(act==='edit'){editId=id;openId=id;render();return}
@@ -720,7 +742,7 @@ function localDatabase(){
   }else{
     try{
       db=localDatabase();canWrite=true;
-      el('list').insertAdjacentHTML('beforebegin','<div class="banner">本地模式：文献保存在当前浏览器中，不会同步到 Claude。请勿清除浏览器数据。</div>');
+      document.querySelector('.wrap').insertAdjacentHTML('beforebegin','<div class="banner storage-banner">本地模式：文献保存在当前浏览器中，不会同步到 Claude。请勿清除浏览器数据。</div>');
     }catch(e){
       ready=true;el('addBtn').disabled=true;
       el('list').innerHTML='<div class="empty"><h3>无法读取或写入本地文献库</h3><p>请允许浏览器存储数据，并确认已有数据格式正常；已有数据未被覆盖。</p></div>';
